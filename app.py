@@ -24,16 +24,26 @@ def perform_ocr(image):
 
     result = ocr.predict(image)
     
-    if result and result[0] is not None:
-        lines = []
-        for line_data in result[0]:
-            text = line_data[1][0]
-            confidence = line_data[1][1]
-            lines.append(f"Text: {text}\nConfidence: {confidence:.2f}\n---")
+    lines = []
+    # --- START OF THE FIX ---
+    # Check if the result is a list and contains a dictionary
+    if result and isinstance(result[0], dict) and 'rec_texts' in result[0]:
         
-        return "\n".join(lines)
-    else:
+        # Extract the lists of texts and scores from the dictionary
+        ocr_result_dict = result[0]
+        texts = ocr_result_dict['rec_texts']
+        scores = ocr_result_dict['rec_scores']
+
+        # Combine them line by line
+        for text, score in zip(texts, scores):
+            lines.append(f"Text: {text}\nConfidence: {score:.2f}\n---")
+
+    # --- END OF THE FIX ---
+
+    if not lines:
         return "No text detected in the image."
+    
+    return "\n".join(lines)
 
 # Create the Gradio Interface
 iface = gr.Interface(
@@ -46,6 +56,6 @@ iface = gr.Interface(
     allow_flagging="never"
 )
 
-# Queue requests and then launch the app. This is the key change!
+# Queue requests and then launch the app, explicitly disabling the share link.
 if __name__ == "__main__":
     iface.queue().launch(server_name="0.0.0.0", server_port=7860, share=False)
