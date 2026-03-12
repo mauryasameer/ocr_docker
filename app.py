@@ -7,7 +7,7 @@ import cv2  # Import OpenCV for drawing
 
 # Initialize the PaddleOCR model for English
 print("Initializing PaddleOCR model...")
-ocr = PaddleOCR(use_angle_cls=True, lang='en')
+ocr = PaddleOCR(use_angle_cls=True, lang='en', enable_mkldnn=False)
 print("Model initialized.")
 
 def perform_ocr(image):
