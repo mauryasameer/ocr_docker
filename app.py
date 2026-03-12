@@ -10,31 +10,30 @@ print("Initializing PaddleOCR model...")
 ocr = PaddleOCR(use_angle_cls=True, lang='en', enable_mkldnn=False)
 print("Model initialized.")
 
-def perform_ocr(image):
+def perform_ocr(image_path):
     """
     Performs OCR, draws bounding boxes, and returns the annotated image and text.
     
     Args:
-        image (numpy.ndarray): The input image as a NumPy array (expected RGB).
+        image_path (str): The file path of the input image.
     
     Returns:
         tuple: A tuple containing (annotated_image, formatted_text).
     """
-    if image is None:
+    if image_path is None:
         return None, "Please upload an image."
 
-    # --- Start of updated logic ---
-    # Ensure image is in 8-bit unsigned integer format (0-255)
-    # and in RGB color format, which Gradio's numpy type usually provides.
-    # If Gradio passes float values (0.0-1.0), this converts them to 0-255.
-    if image.dtype != np.uint8:
-        image = (image * 255).astype(np.uint8)
-    
-    # PaddleOCR's predict method expects a NumPy array (H, W, C) which is typically RGB.
-    # Create a copy of the image to draw on, leaving the original untouched
+    # Read the image using OpenCV (loads in BGR format)
+    # This ensures we are drawing on the exact same pixel matrix PaddleOCR uses
+    image = cv2.imread(image_path)
+    if image is None:
+        return None, "Failed to read image. Please try another file."
+
+    # Create a copy of the image to draw on
     image_with_boxes = image.copy() 
     
-    result = ocr.predict(image) # Pass the (hopefully) consistent image to PaddleOCR
+    # Pass the file path directly to PaddleOCR (it handles loading properly)
+    result = ocr.predict(image_path)
     
     lines = []
     # Check if the result is a list and contains a dictionary
@@ -65,15 +64,18 @@ def perform_ocr(image):
             # but since image_with_boxes is RGB from Gradio, (0, 255, 0) is green.
             cv2.polylines(image_with_boxes, [pts], isClosed=True, color=(0, 255, 0), thickness=2)
 
+    # Convert augmented BGR image to RGB for accurate color display in Gradio
+    image_with_boxes_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB)
+
     formatted_text = "\n".join(lines) if lines else "No text detected in the image."
     
-    return image_with_boxes, formatted_text
+    return image_with_boxes_rgb, formatted_text
     # --- End of updated logic ---
     
 # --- Update the Interface with two outputs ---
 iface = gr.Interface(
     fn=perform_ocr,
-    inputs=gr.Image(type="numpy", label="Upload Image for OCR"),
+    inputs=gr.Image(type="filepath", label="Upload Image for OCR"),
     outputs=[
         gr.Image(label="Image with Bounding Boxes"),
         gr.Textbox(label="Extracted Text", lines=20)
