@@ -1,5 +1,13 @@
-# PaddleOCR App with Gradio
+# PaddleOCR Document Extractor
 
+![Python](https://img.shields.io/badge/python-3.9-blue)
+![Docker](https://img.shields.io/badge/docker-ready-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+[![Live Demo](https://img.shields.io/badge/demo-HuggingFace-orange)](https://huggingface.co/spaces/mauryasameer/OCR)
+
+> Containerised OCR microservice using PaddleOCR for structured
+> document text extraction, with bounding box visualisation.
+> Deployable via Docker in one command.
 This project is a web-based Optical Character Recognition (OCR) application powered by [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) and [Gradio](https://gradio.app/). It allows you to upload an image and automatically detects, extracts, and highlights text using bounding boxes, providing confidence scores for each detection.
 
 ## Features
