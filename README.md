@@ -5,6 +5,14 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 [![Live Demo](https://img.shields.io/badge/demo-HuggingFace-orange)](https://huggingface.co/spaces/mauryasameer/OCR)
 
+## Background
+
+This project implements the core containerisation and serving pattern
+used in a production OCR-as-a-Service pipeline that processed PAN cards,
+Aadhaar documents and structured receipts across multiple product lines
+at scale. This open-source version demonstrates the architecture using
+PaddleOCR without any proprietary data or business logic.
+
 > Containerised OCR microservice using PaddleOCR for structured
 > document text extraction, with bounding box visualisation.
 > Deployable via Docker in one command.
