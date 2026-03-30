@@ -1,11 +1,3 @@
----
-title: OCR
-emoji: 📝
-colorFrom: pink
-colorTo: indigo
-sdk: docker
-pinned: false
----
 
 # 🛡️ OCR-Docker-Framework
 ### **High-Performance Optical Character Recognition & Performance Auditing Suite**
@@ -14,18 +6,6 @@ pinned: false
 [![HuggingFace Space](https://img.shields.io/badge/🤗%20HuggingFace-Space-blue)](https://huggingface.co/spaces/mauryasameer/OCR)
 [![CI](https://github.com/mauryasameer/ocr_docker/actions/workflows/deploy_hf_space.yml/badge.svg)](https://github.com/mauryasameer/ocr_docker/actions)
 
----
-
-## ⚡ No-Install Quick Start
-
-Don't want to clone the repo? Use one of these:
-
-| Option | Best for | Link |
-|---|---|---|
-| **HuggingFace Space** | Zero-setup browser demo, executive review | [![HF Space](https://img.shields.io/badge/🤗-Open%20Space-blue)](https://huggingface.co/spaces/mauryasameer/OCR) |
-| **Local CLI** | Production use, offline, batch processing | See [Getting Started](#-getting-started) below |
-
----
 
 ## 📖 Overview
 > "In OCR, 'it reads' is not a valid test result. Accuracy is the only metric."
@@ -42,19 +22,6 @@ This framework is **production-ready**, optimized for **containarized environmen
 ### **The Problem it Solves**
 Many OCR implementations are "black boxes." This framework provides an **audit trail** for every extraction, allowing you to measure **F1 Score** and **CER** (Character Error Rate) against your own gold-standard datasets.
 
----
-
-## 🏗️ System Architecture
-The framework follows a modular "Engine-Auditor" design:
-
-1.  **OCR Engine Wrapper**: Standardized PaddleOCR interface with robust image handling.
-2.  **The Auditor**: A metric-driven suite mapping extractions to ground-truth data.
-3.  **Evaluator Modules**:
-    *   **F1 Score**: Word-level precision and recall for extraction integrity.
-    *   **CER (Character Error Rate)**: Measuring fine-grained recognition success.
-4.  **Reporting Engine**: Automated JSON and Markdown generator for audit trails.
-
----
 
 ## 📂 Project Structure
 ```text
@@ -76,47 +43,6 @@ ocr_docker/
 └── requirements-dev.txt # Test-only dependencies
 ```
 
----
-
-## 🚀 Getting Started
-
-### 1. Prerequisites
-* **Python 3.9+**
-* **Docker (Optional - for containerized run)**
-* **Hugging Face Account (For Space deployment)**
-
-### 2. Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/mauryasameer/ocr_docker.git
-cd ocr_docker
-
-# Setup Virtual Environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install Core Dependencies
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-```
-
-### 3. Running a Performance Audit
-
-Use the built-in CLI to evaluate the engine on your gold-standard data:
-
-```bash
-# Run the benchmark suite
-python3 scripts/run_benchmark.py
-```
-
-### 4. Running the Web UI
-
-```bash
-python3 app.py
-```
-
----
 
 ## 🛠️ The Core Modules
 
@@ -129,16 +55,6 @@ For high-precision documents, we measure the Levenshtein distance at the charact
 ### **3. Audit Trail Reporting**
 Generates a "Committee-Ready" report in `reports/` following every benchmark, providing a timestamped record of model performance — essential for tracking model health under production load.
 
----
-
-## 🛡️ Compliance & Standards
-| Feature | Module | Focus Area |
-| --- | --- | --- |
-| **Accuracy Audit** | F1 Score | Data Integrity |
-| **Fine-Grained Audit** | CER | Character-level precision |
-| **Audit Trail** | Reporting | Documentation & Traceability |
-
----
 
 ## ⚖️ License
 Distributed under the Apache License 2.0. See `LICENSE` for more information.

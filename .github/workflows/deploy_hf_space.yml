@@ -34,8 +34,8 @@ jobs:
           # Keep .git directory
           find hf_deploy -maxdepth 1 ! -name ".git" ! -name "hf_deploy" -exec rm -rf {} +
           
-          # Copy current repo files to hf_deploy
-          cp README.md hf_deploy/
+          # Copy and merge metadata + README
+          cat .github/hf_metadata.yml README.md > hf_deploy/README.md
           cp Dockerfile hf_deploy/
           cp app.py hf_deploy/
           cp requirements.txt hf_deploy/
