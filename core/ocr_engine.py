@@ -2,44 +2,40 @@
 
 import cv2
 import numpy as np
-from paddleocr import PaddleOCR
+from abc import ABC, abstractmethod
 
-class OCREngine:
+class BaseOCREngine(ABC):
+    """
+    Abstract Base Class for OCR Engines.
+    All engines must implement predict and process_image.
+    """
+    @abstractmethod
+    def __init__(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def predict(self, image_path):
+        """Performs OCR and returns raw results."""
+        pass
+
+    @abstractmethod
+    def process_image(self, image_path):
+        """Processes image and returns (annotated_image, formatted_text, raw_data)."""
+        pass
+
+class PaddleOCREngine(BaseOCREngine):
+    """
+    PaddleOCR Implementation.
+    """
     def __init__(self, lang='en', use_angle_cls=True, enable_mkldnn=False):
-        """
-        Initializes the PaddleOCR model.
-        
-        Args:
-            lang (str): Language for OCR (default 'en').
-            use_angle_cls (bool): Use angle classification.
-            enable_mkldnn (bool): Enable MKLDNN acceleration.
-        """
-        print(f"Initializing PaddleOCR model (lang={lang})...")
+        from paddleocr import PaddleOCR
+        print(f"Initializing PaddleOCR (lang={lang})...")
         self.ocr = PaddleOCR(use_angle_cls=use_angle_cls, lang=lang, enable_mkldnn=enable_mkldnn)
-        print("Model initialized.")
 
     def predict(self, image_path):
-        """
-        Performs OCR on an image.
-        
-        Args:
-            image_path (str): Path to the image file.
-            
-        Returns:
-            list: Raw OCR results from PaddleOCR.
-        """
         return self.ocr.predict(image_path)
 
     def process_image(self, image_path):
-        """
-        Performs OCR and processes the image to add bounding boxes.
-        
-        Args:
-            image_path (str): Path to the image file.
-            
-        Returns:
-            tuple: (annotated_image_rgb, formatted_text, raw_data)
-        """
         image = cv2.imread(image_path)
         if image is None:
             return None, "Failed to read image.", None
@@ -71,3 +67,38 @@ class OCREngine:
         formatted_text = "\n".join(lines) if lines else "No text detected."
         
         return image_with_boxes_rgb, formatted_text, raw_data
+
+class OCRFactory:
+    """
+    Factory to manage and instantiate OCR engines.
+    """
+    _engines = {
+        "paddle": PaddleOCREngine
+    }
+
+    @classmethod
+    def register_engine(cls, name, engine_class):
+        cls._engines[name.lower()] = engine_class
+
+    @classmethod
+    def get_engine(cls, name="paddle", **kwargs):
+        name = name.lower()
+        if name not in cls._engines:
+            # Attempt to dynamic load
+            if name == "easyocr":
+                from core.engines.easyocr_engine import EasyOCREngine
+                cls.register_engine("easyocr", EasyOCREngine)
+            elif name == "tesseract":
+                # We will implement this next
+                from core.engines.tesseract_engine import TesseractEngine
+                cls.register_engine("tesseract", TesseractEngine)
+                
+        engine_class = cls._engines.get(name)
+        if not engine_class:
+            raise ValueError(f"OCR Engine '{name}' not found or not installed.")
+        return engine_class(**kwargs)
+
+    @classmethod
+    def list_available_engines(cls):
+        # In a real framework, we'd scan core/engines/
+        return ["paddle", "easyocr", "tesseract"]

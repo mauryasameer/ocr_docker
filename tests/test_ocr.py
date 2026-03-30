@@ -1,12 +1,12 @@
 import os
 import pytest
-from core.ocr_engine import OCREngine
+from core.ocr_engine import OCRFactory, PaddleOCREngine
 from core.evaluators.evaluator import OCREvaluator
 
-def test_ocr_engine_initialization():
-    """Test if OCREngine can be initialized."""
-    engine = OCREngine(lang='en')
-    assert engine is not None
+def test_paddle_engine_initialization():
+    """Test if PaddleOCREngine can be initialized via factory."""
+    engine = OCRFactory.get_engine("paddle")
+    assert isinstance(engine, PaddleOCREngine)
     assert engine.ocr is not None
 
 def test_f1_score_calculation():
@@ -30,3 +30,10 @@ def test_cer_calculation():
     pred_wrong = "hella"
     cer = evaluator.calculate_cer(gold, pred_wrong)
     assert cer > 0.0
+
+def test_factory_list():
+    """Test if factory lists available engines."""
+    engines = OCRFactory.list_available_engines()
+    assert "paddle" in engines
+    assert "easyocr" in engines
+    assert "tesseract" in engines

@@ -1,34 +1,56 @@
 # app.py
 
 import gradio as gr
-from core.ocr_engine import OCREngine
+from core.ocr_engine import OCRFactory
 
-# Initialize the modular OCR engine
-engine = OCREngine(lang='en', use_angle_cls=True, enable_mkldnn=False)
-
-def perform_ocr(image_path):
+def perform_ocr(image_path, engine_name):
     """
-    Performs OCR using the modular engine and returns the annotated image and text.
+    Performs OCR using the selected engine and returns the annotated image and text.
     """
     if image_path is None:
-        return None, "Please upload an image."
+        return None, "Please upload an image.", "Waiting for engine..."
 
-    annotated_image, formatted_text, _ = engine.process_image(image_path)
-    return annotated_image, formatted_text
+    try:
+        # Get the selected engine from the factory
+        engine = OCRFactory.get_engine(engine_name)
+        annotated_image, formatted_text, _ = engine.process_image(image_path)
+        return annotated_image, formatted_text, f"Success (using {engine_name})"
+    except Exception as e:
+        import traceback
+        error_msg = f"❌ Error: {str(e)}"
+        print(error_msg)
+        traceback.print_exc()
+        return None, error_msg, f"Failed ({engine_name})"
 
 # Define the Gradio interface
-iface = gr.Interface(
-    fn=perform_ocr,
-    inputs=gr.Image(type="filepath", label="Upload Image for OCR"),
-    outputs=[
-        gr.Image(label="Image with Bounding Boxes"),
-        gr.Textbox(label="Extracted Text", lines=20)
-    ],
-    title="📝 PaddleOCR Text Extractor with Bounding Boxes",
-    description="Upload an image to see the detected text highlighted with bounding boxes and listed with confidence scores.",
-    article="Powered by PaddleOCR, OpenCV, and Gradio. Modular architecture inspired by professional evaluation frameworks.",
-    allow_flagging="never"
-)
+with gr.Blocks(title="🛡️ OCR Framework Audit Suite") as demo:
+    gr.Markdown("# 🛡️ OCR Framework Audit Suite")
+    gr.Markdown("Select an engine and upload an image to perform text extraction with bounding boxes.")
+    
+    with gr.Row():
+        with gr.Column(scale=1):
+            image_input = gr.Image(type="filepath", label="Upload Image for OCR")
+            engine_select = gr.Dropdown(
+                choices=OCRFactory.list_available_engines(),
+                value="paddle",
+                label="Select OCR Engine"
+            )
+            status_output = gr.Textbox(label="Status")
+            submit_btn = gr.Button("Extract Text", variant="primary")
+            
+        with gr.Column(scale=2):
+            image_output = gr.Image(label="Image with Bounding Boxes")
+            text_output = gr.Textbox(label="Extracted Text", lines=20)
+
+    submit_btn.click(
+        fn=perform_ocr,
+        inputs=[image_input, engine_select],
+        outputs=[image_output, text_output, status_output]
+    )
+    
+    gr.Markdown("---")
+    gr.Markdown("Powered by PaddleOCR, EasyOCR, and Tesseract. Modular architecture inspired by professional evaluation frameworks.")
 
 if __name__ == "__main__":
-    iface.queue().launch(server_name="0.0.0.0", server_port=7860, share=False)
+    # Enable queue to prevent DDOS/crashes (Required for HF Spaces)
+    demo.queue().launch(server_name="0.0.0.0", server_port=7860, share=False)

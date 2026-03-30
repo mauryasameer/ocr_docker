@@ -7,7 +7,15 @@ FROM python:3.9
 RUN useradd -m -u 1000 user
 
 # 3. Update package lists and install required system libraries
-RUN apt-get update && apt-get install -y libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+# Default: only PaddleOCR requirements
+# Use BUILD_ENGINES="paddle,easyocr,tesseract" to install others
+ARG BUILD_ENGINES="paddle"
+
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    $(if echo "$BUILD_ENGINES" | grep -q "tesseract"; then echo "tesseract-ocr"; fi) \
+    && rm -rf /var/lib/apt/lists/*
 
 # 4. Set the working directory inside the container
 WORKDIR /code
@@ -15,6 +23,14 @@ WORKDIR /code
 # 5. Copy and install Python dependencies
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+# Install optional engines based on BUILD_ENGINES
+RUN if echo "$BUILD_ENGINES" | grep -q "easyocr"; then \
+        pip install --no-cache-dir easyocr; \
+    fi && \
+    if echo "$BUILD_ENGINES" | grep -q "tesseract"; then \
+        pip install --no-cache-dir pytesseract; \
+    fi
 
 # 6. Change ownership of the working directory to the new user
 RUN chown -R user:user /code
@@ -26,7 +42,7 @@ USER user
 ENV HOME=/code
 
 # 9. Copy and run the pre-download script.
-# This downloads the models and saves them as a layer in the Docker image.
+# (PaddleOCR is always pre-downloaded by default)
 COPY --chown=user:user ./download_models.py /code/download_models.py
 RUN python download_models.py
 
@@ -38,5 +54,5 @@ COPY --chown=user:user ./app.py /code/app.py
 # 11. Expose the port Gradio will run on
 EXPOSE 7860
 
-# 12. The command to run when the container starts
+# 12. Use the provided command to run the app
 CMD ["python", "app.py"]
