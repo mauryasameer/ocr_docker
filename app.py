@@ -14,11 +14,13 @@ def perform_ocr(image_path, engine_name):
         # Get the selected engine from the factory
         engine = OCRFactory.get_engine(engine_name)
         annotated_image, formatted_text, _ = engine.process_image(image_path)
-        # Validate that annotated_image is a valid image (numpy array or PIL Image)
         import numpy as np
         from PIL import Image
-        if annotated_image is None or not isinstance(annotated_image, (np.ndarray, Image.Image)):
-            return None, "Failed to process image.", f"Failed ({engine_name})"
+        import os
+        if not isinstance(annotated_image, (np.ndarray, Image.Image)):
+            if os.environ.get("OCR_DEBUG", "0") == "1":
+                print(f"[DEBUG] Invalid image type returned: {type(annotated_image)} | Value: {repr(annotated_image)}")
+            annotated_image = None  # Always return None if not a valid image
         return annotated_image, formatted_text, f"Success (using {engine_name})"
     except Exception as e:
         import traceback
