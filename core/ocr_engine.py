@@ -45,17 +45,22 @@ class PaddleOCREngine(BaseOCREngine):
         if not result:
             return image, "No text detected.", []
 
-        # result[0].img contains the natively annotated image with perfect alignment
-        image_with_boxes = result[0].img if hasattr(result[0], 'img') else image
-        
+        # result[0].img contains the natively annotated image
+        # We cache it and ensure it's a numpy array for OpenCV
+        if hasattr(result[0], 'img') and result[0].img is not None:
+            image_with_boxes = np.array(result[0].img)
+        else:
+            image_with_boxes = image
+
         lines = []
         raw_data = []
 
-        if result and isinstance(result[0], dict) and 'rec_texts' in result[0]:
+        # paddlex results are dictionaries
+        if result and len(result) > 0 and isinstance(result[0], dict) and 'rec_texts' in result[0]:
             ocr_result_dict = result[0]
-            texts = ocr_result_dict['rec_texts']
-            scores = ocr_result_dict['rec_scores']
-            boxes = ocr_result_dict['dt_polys']
+            texts = ocr_result_dict.get('rec_texts', [])
+            scores = ocr_result_dict.get('rec_scores', [])
+            boxes = ocr_result_dict.get('dt_polys', [])
 
             for text, score, box in zip(texts, scores, boxes):
                 lines.append(f"Text: {text}\nConfidence: {score:.2f}\n---")
@@ -72,9 +77,20 @@ class PaddleOCREngine(BaseOCREngine):
                     "box": reshaped_box.tolist()
                 })
 
-        # Convert back to RGB for Gradio consistency if it's BGR
-        # (paddlex visualization usually returns BGR)
-        image_with_boxes_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB)
+        # Ensure image_with_boxes is a valid numpy array before cvtColor
+        if not isinstance(image_with_boxes, np.ndarray):
+            image_with_boxes = np.array(image_with_boxes)
+
+        # Convert back to RGB for Gradio consistency (paddlex usually returns BGR)
+        try:
+            # Check if it's already RGB or grayscale
+            if len(image_with_boxes.shape) == 3 and image_with_boxes.shape[2] == 3:
+                image_with_boxes_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB)
+            else:
+                image_with_boxes_rgb = image_with_boxes
+        except Exception:
+            image_with_boxes_rgb = image_with_boxes
+        
         formatted_text = "\n".join(lines) if lines else "No text detected."
         
         return image_with_boxes_rgb, formatted_text, raw_data
