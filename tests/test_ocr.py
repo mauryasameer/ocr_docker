@@ -5,21 +5,7 @@ import numpy as np
 from core.ocr_engine import OCRFactory, PaddleOCREngine
 from core.evaluators.evaluator import OCREvaluator
 
-@pytest.fixture
-def mock_paddle():
-    with patch("paddleocr.PaddleOCR") as mock:
-        instance = mock.return_value
-        # Use a list containing a MagicMock or dict to mimic PaddleX/3.4 output
-        res_obj = MagicMock()
-        res_obj.get.side_effect = lambda k, d: {'rec_texts': ['Mocked Text'], 'rec_scores': [0.99], 'dt_polys': [[[0, 0], [10, 0]]]}.get(k, d)
-        res_obj.__getitem__.side_effect = lambda k: {'rec_texts': ['Mocked Text']}[k]
-        res_obj.img = np.zeros((10, 10, 3), dtype=np.uint8)
-        
-        # Result is a list-like of these objects
-        instance.predict.return_value = [res_obj]
-        yield instance
-
-def test_paddle_engine_mocked_predict(mock_paddle):
+def test_paddle_engine_mocked_predict():
     """Test if PaddleOCREngine correctly handles mocked results."""
     engine = PaddleOCREngine()
     
@@ -31,8 +17,7 @@ def test_paddle_engine_mocked_predict(mock_paddle):
             
             img, text, raw = engine.process_image("fake_path.png")
             assert "Mocked Text" in text
-            # We check if text is being processed
-            assert "Mocked Text" in text
+            assert raw[0]['text'] == "Mocked Text"
 
 def test_easyocr_factory_dynamic_loading():
     """Test if EasyOCR engine can be loaded via factory even if not pre-registered."""

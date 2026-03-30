@@ -34,5 +34,6 @@ def test_partial_match(evaluator):
 def test_completely_wrong(evaluator):
     gold = "abc"
     pred = "xyz"
+    # Over 1.0 because every character is wrong
     assert evaluator.calculate_f1_score(gold, pred) == 0.0
-    assert evaluator.calculate_cer(gold, pred) > 0.5
+    assert evaluator.calculate_cer(gold, pred) == 1.0

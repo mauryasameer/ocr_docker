@@ -7,9 +7,10 @@ class OCREvaluator:
     def calculate_f1_score(gold_text, predicted_text):
         """
         Calculates a simple word-level F1 score between gold and predicted text.
+        Case-insensitive by default.
         """
-        gold_words = gold_text.split()
-        pred_words = predicted_text.split()
+        gold_words = gold_text.lower().split()
+        pred_words = predicted_text.lower().split()
         
         if not gold_words and not pred_words:
             return 1.0
@@ -20,8 +21,6 @@ class OCREvaluator:
         gold_word_count = len(gold_words)
         pred_word_count = len(pred_words)
         
-        # Simple word overlap count (can be improved with more sophisticated methods)
-        # Using difflib to find matching sequences
         matcher = difflib.SequenceMatcher(None, gold_words, pred_words)
         for block in matcher.get_matching_blocks():
             common += block.size
@@ -39,12 +38,27 @@ class OCREvaluator:
     def calculate_cer(gold_text, predicted_text):
         """
         Calculates Character Error Rate (CER).
+        Case-insensitive.
         """
+        gold_text = gold_text.lower()
+        predicted_text = predicted_text.lower()
+
         if not gold_text:
             return 0.0 if not predicted_text else 1.0
             
         matcher = difflib.SequenceMatcher(None, gold_text, predicted_text)
-        distance = sum(1 for tag, i1, i2, j1, j2 in matcher.get_opcodes() if tag != 'equal')
+        # Fix: distance should be sum of insertions, deletions, and substitutions
+        # matcher.get_opcodes() gives (tag, i1, i2, j1, j2)
+        # 'replace': max(len1, len2) changes? No, standard is substitution count.
+        # For simplicity in OCR, distance = sum of edits
+        distance = 0
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == 'replace':
+                distance += max(i2 - i1, j2 - j1)
+            elif tag == 'insert':
+                distance += j2 - j1
+            elif tag == 'delete':
+                distance += i2 - i1
         return distance / len(gold_text)
 
     def evaluate_batch(self, engine, test_cases):
