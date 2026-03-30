@@ -36,6 +36,7 @@ jobs:
           
           # Copy and merge metadata + README
           cat .github/hf_metadata.yml README.md > hf_deploy/README.md
+          cp .gitattributes hf_deploy/
           cp Dockerfile hf_deploy/
           cp app.py hf_deploy/
           cp requirements.txt hf_deploy/
@@ -44,8 +45,12 @@ jobs:
           cp -r assets hf_deploy/
           cp -r data hf_deploy/
           
-          # Commit and push
+          # Initialize LFS in the deployment repo
           cd hf_deploy
+          git lfs install
+          git lfs track "assets/*.png" "data/gold_standard/*.png"
+          
+          # Commit and push
           git add -A
-          git commit --allow-empty -m "chore: sync from GitHub $(date +'%Y-%m-%d %H:%M')"
+          git commit --allow-empty -m "chore: sync from GitHub $(date +'%Y-%m-%d %H:%M') [with LFS]"
           git push
