@@ -45,12 +45,14 @@ class PaddleOCREngine(BaseOCREngine):
         if not result:
             return image, "No text detected.", []
 
-        # result[0].img contains the natively annotated image
-        # We cache it and ensure it's a numpy array for OpenCV
+        # result[0].img contains the natively annotated image.
+        # Guard: np.array() on a non-image object produces a dtype=object 0-d
+        # array that passes isinstance checks but crashes Gradio's _scale().
+        image_with_boxes = image
         if hasattr(result[0], 'img') and result[0].img is not None:
-            image_with_boxes = np.array(result[0].img)
-        else:
-            image_with_boxes = image
+            candidate = np.array(result[0].img)
+            if candidate.ndim == 3 and candidate.shape[2] in (3, 4):
+                image_with_boxes = candidate.astype(np.uint8)
 
         lines = []
         raw_data = []
@@ -77,24 +79,20 @@ class PaddleOCREngine(BaseOCREngine):
                     "box": reshaped_box.tolist()
                 })
 
-        # Ensure image_with_boxes is a valid numpy array before cvtColor
-        if not isinstance(image_with_boxes, np.ndarray):
-            image_with_boxes = np.array(image_with_boxes)
+        # Convert back to RGB for Gradio (paddlex usually returns BGR).
+        # Only proceed if image_with_boxes is a proper H×W×3 uint8 ndarray.
+        image_with_boxes_rgb = None
+        if (isinstance(image_with_boxes, np.ndarray)
+                and image_with_boxes.ndim == 3
+                and image_with_boxes.shape[2] == 3):
+            try:
+                image_with_boxes_rgb = cv2.cvtColor(
+                    image_with_boxes.astype(np.uint8), cv2.COLOR_BGR2RGB
+                )
+            except Exception:
+                image_with_boxes_rgb = None
 
-        # Convert back to RGB for Gradio consistency (paddlex usually returns BGR)
-        try:
-            # Check if it's already RGB or grayscale
-            if len(image_with_boxes.shape) == 3 and image_with_boxes.shape[2] == 3:
-                image_with_boxes_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB)
-            else:
-                image_with_boxes_rgb = image_with_boxes
-        except Exception:
-            image_with_boxes_rgb = image_with_boxes
-        
         formatted_text = "\n".join(lines) if lines else "No text detected."
-        # Final check: ensure image_with_boxes_rgb is a numpy array
-        if not isinstance(image_with_boxes_rgb, np.ndarray):
-            image_with_boxes_rgb = None
         return image_with_boxes_rgb, formatted_text, raw_data
 
 class OCRFactory:

@@ -12,7 +12,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.13'
       - name: Install Test Deps
         run: pip install pytest numpy opencv-python-headless
       - name: Run Tests
@@ -31,7 +31,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.13'
 
       - name: Install Hugging Face Hub
         run: pip install huggingface_hub

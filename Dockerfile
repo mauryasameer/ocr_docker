@@ -1,7 +1,7 @@
 # Dockerfile
 
 # 1. Start with the full Python base image
-FROM python:3.9
+FROM python:3.13
 
 # 2. Add non-root user (Required for Hugging Face Spaces)
 RUN useradd -m -u 1000 user

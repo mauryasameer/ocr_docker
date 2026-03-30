@@ -17,10 +17,17 @@ def perform_ocr(image_path, engine_name):
         import numpy as np
         from PIL import Image
         import os
-        if not isinstance(annotated_image, (np.ndarray, Image.Image)):
+        if isinstance(annotated_image, np.ndarray):
+            # Reject dtype=object arrays (e.g. np.array wrapping a dict) —
+            # they pass isinstance but crash Gradio's image encoder.
+            if annotated_image.ndim != 3 or annotated_image.dtype == object:
+                if os.environ.get("OCR_DEBUG", "0") == "1":
+                    print(f"[DEBUG] Bad ndarray shape/dtype: shape={annotated_image.shape} dtype={annotated_image.dtype}")
+                annotated_image = None
+        elif not isinstance(annotated_image, Image.Image):
             if os.environ.get("OCR_DEBUG", "0") == "1":
                 print(f"[DEBUG] Invalid image type returned: {type(annotated_image)} | Value: {repr(annotated_image)}")
-            annotated_image = None  # Always return None if not a valid image
+            annotated_image = None
         return annotated_image, formatted_text, f"Success (using {engine_name})"
     except Exception as e:
         import traceback
