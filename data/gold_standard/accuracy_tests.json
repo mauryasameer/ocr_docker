@@ -1,7 +1,12 @@
 [
   {
-    "name": "Basic Typography Test",
-    "image_path": "data/gold_standard/test_case_1.png",
-    "text": "PaddleOCR Test Case - Success"
+    "name": "Professional Business Document",
+    "image_path": "data/gold_standard/complex_document.png",
+    "text": "COMPANY OFFICE Acme Solutions Inc. 123 Business Avenue, Suite 500 New York, NY 10001, USA +1 (212) 555-0100 acme.com CONTACTS Client Services: (212) 555-0111 Support: support@acme.com Sales: sales@acme.com Fax: +1 (212) 555-0199 IMPORTANT INFO Terms of Service Apply Privacy Policy Confidentiality Agreement Registered in DE Tax ID: 12-3456789 DOCUMENT DETAILS Report ID: AS-FY2023-Q4-001 Date: October 15, 2023 Page 12 of 12 Author: Sarah Chen SUMMARY OF DATA CATEGORY VALUES (Q3) NET TOTAL (Q4) VARIANCE % Revenue $2,450,980.12 $2,689,450.50 +9.7% Expenses $1,115,300.75 $1,201,880.30 +7.8% Net Profit $1,335,679.37 $1,487,570.20 +11.4% AUTHORIZED SIGNATURE Johnnathan E. Davis, CEO 10/15/2023 Page 12"
+  },
+  {
+    "name": "Retail Grocery Receipt",
+    "image_path": "data/gold_standard/receipt_sample.png",
+    "text": "SUNRISE GROCERY CO. STORE #42 | 1234 OAKWOOD AVE PORTLAND, OR 97205 | (503) 555-0199 www.sunrisegrocery.com DATE: 10/26/23 | TIME: 14:38 REG: 04 | TRAN: 8872 | CSHR: ELIZA 1 GAL WHOLE MILK $4.29 ORGANIC BANANAS $1.42 (1.8 LB @ 0.79/LB) GF OATS 32OZ $5.99 AVOCADOS (3CT) $3.49 LOAF SOURDOUGH $4.99 PEANUT BUTTER (CREAMY) $3.79 LARGE EGGS (DOZ) $3.19 GROUND BEEF (1.2 LB) $7.43 DORITOS NACHO CHEESE $4.69 CHICKEN BREASTS (2.1 LB) $9.85 DIET COKE (12PK) $6.49 SUBTOTAL: $55.62 SALES TAX (6.5%) : $3.62 TOTAL: $59.24 PAID: DEBIT CARD $59.24 **** 4112 ITEMS: 11 THANK YOU FOR SHOPPING AT SUNRISE GROCERY!"
   }
 ]
