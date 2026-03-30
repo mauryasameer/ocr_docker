@@ -31,6 +31,8 @@ COPY --chown=user:user ./download_models.py /code/download_models.py
 RUN python download_models.py
 
 # 10. Copy your application code into the container
+COPY --chown=user:user ./core /code/core
+COPY --chown=user:user ./data /code/data
 COPY --chown=user:user ./app.py /code/app.py
 
 # 11. Expose the port Gradio will run on

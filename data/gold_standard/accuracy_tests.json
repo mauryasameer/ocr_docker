@@ -1,0 +1,7 @@
+[
+  {
+    "name": "Basic Typography Test",
+    "image_path": "data/gold_standard/test_case_1.png",
+    "text": "PaddleOCR Test Case - Success"
+  }
+]
