@@ -92,7 +92,9 @@ class PaddleOCREngine(BaseOCREngine):
             image_with_boxes_rgb = image_with_boxes
         
         formatted_text = "\n".join(lines) if lines else "No text detected."
-        
+        # Final check: ensure image_with_boxes_rgb is a numpy array
+        if not isinstance(image_with_boxes_rgb, np.ndarray):
+            image_with_boxes_rgb = None
         return image_with_boxes_rgb, formatted_text, raw_data
 
 class OCRFactory:

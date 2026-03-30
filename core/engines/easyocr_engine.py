@@ -49,5 +49,8 @@ class EasyOCREngine(BaseOCREngine):
 
         image_with_boxes_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB)
         formatted_text = "\n".join(lines) if lines else "No text detected."
-        
+        # Final check: ensure image_with_boxes_rgb is a numpy array
+        import numpy as np
+        if not isinstance(image_with_boxes_rgb, np.ndarray):
+            image_with_boxes_rgb = None
         return image_with_boxes_rgb, formatted_text, raw_data
