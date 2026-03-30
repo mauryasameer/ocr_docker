@@ -40,8 +40,13 @@ class PaddleOCREngine(BaseOCREngine):
         if image is None:
             return None, "Failed to read image.", None
 
-        image_with_boxes = image.copy()
-        result = self.predict(image_path)
+        # Use image_path for PaddleOCR to handle metadata/resolution correctly
+        result = self.ocr.predict(image_path)
+        if not result:
+            return image, "No text detected.", []
+
+        # result[0].img contains the natively annotated image with perfect alignment
+        image_with_boxes = result[0].img if hasattr(result[0], 'img') else image
         
         lines = []
         raw_data = []
@@ -54,15 +59,21 @@ class PaddleOCREngine(BaseOCREngine):
 
             for text, score, box in zip(texts, scores, boxes):
                 lines.append(f"Text: {text}\nConfidence: {score:.2f}\n---")
+                
+                # Reshape for raw_data consistency
+                if isinstance(box, (list, np.ndarray)) and len(box) == 8:
+                    reshaped_box = np.array(box, dtype=np.int32).reshape((4, 2))
+                else:
+                    reshaped_box = np.array(box, dtype=np.int32)
+
                 raw_data.append({
                     "text": text,
                     "confidence": float(score),
-                    "box": box.tolist() if isinstance(box, np.ndarray) else box
+                    "box": reshaped_box.tolist()
                 })
-                
-                pts = np.array(box, dtype=np.int32)
-                cv2.polylines(image_with_boxes, [pts], isClosed=True, color=(0, 255, 0), thickness=2)
 
+        # Convert back to RGB for Gradio consistency if it's BGR
+        # (paddlex visualization usually returns BGR)
         image_with_boxes_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB)
         formatted_text = "\n".join(lines) if lines else "No text detected."
         
