@@ -3,54 +3,49 @@ name: Deploy to HuggingFace Space
 on:
   push:
     branches: [main]
-    paths:
-      - "app.py"
-      - "core/**"
-      - "requirements.txt"
-      - "download_models.py"
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: true
 
-      - name: Push to HuggingFace Space
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Hugging Face Hub
+        run: pip install huggingface_hub
+
+      - name: Prep Sync Folder
+        run: |
+          mkdir hf_sync
+          # Prepend metadata to README
+          cat .github/hf_metadata.yml README.md > hf_sync/README.md
+          # Copy all necessary files
+          cp Dockerfile hf_sync/
+          cp app.py hf_sync/
+          cp requirements.txt hf_sync/
+          cp download_models.py hf_sync/
+          cp -r core hf_sync/
+          cp -r assets hf_sync/
+          cp -r data hf_sync/
+          cp .gitattributes hf_sync/
+
+      - name: Push to Hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          pip install -q huggingface_hub
-          git config --global user.email "ci@github.com"
-          git config --global user.name "GitHub Actions"
-          
-          # Clone the Space repo
-          git clone https://mauryasameer:${HF_TOKEN}@huggingface.co/spaces/mauryasameer/OCR hf_deploy
-          
-          # Clean hf_deploy to get a fresh state from local repo
-          # Keep .git directory
-          find hf_deploy -maxdepth 1 ! -name ".git" ! -name "hf_deploy" -exec rm -rf {} +
-          
-          # Copy and merge metadata + README
-          cat .github/hf_metadata.yml README.md > hf_deploy/README.md
-          cp .gitattributes hf_deploy/
-          cp Dockerfile hf_deploy/
-          cp app.py hf_deploy/
-          cp requirements.txt hf_deploy/
-          cp download_models.py hf_deploy/
-          cp -r core hf_deploy/
-          cp -r assets hf_deploy/
-          cp -r data hf_deploy/
-          
-          # Initialize LFS in the deployment repo
-          cd hf_deploy
-          git lfs install
-          git lfs track "assets/*.png" "data/gold_standard/*.png"
-          
-          # Commit and push
-          git add -A
-          git commit --allow-empty -m "chore: sync from GitHub $(date +'%Y-%m-%d %H:%M') [with LFS]"
-          git push
+          python -c "
+          from huggingface_hub import HfApi
+          import os
+          api = HfApi()
+          api.upload_folder(
+              folder_path='hf_sync',
+              repo_id='mauryasameer/OCR',
+              repo_type='space',
+              token=os.environ['HF_TOKEN']
+          )"
