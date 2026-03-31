@@ -47,15 +47,22 @@ class PaddleOCREngine(BaseOCREngine):
 
         lines = []
         raw_data = []
-
-        # Use the image PaddleOCR processed internally — dt_polys coordinates
-        # are in that image's space. Fall back to cv2.imread result if unavailable.
         result_item = result[0]
-        base_image = None
-        if hasattr(result_item, 'img') and isinstance(result_item.img, np.ndarray) and result_item.img.ndim == 3:
-            base_image = result_item.img.copy()
-        if base_image is None:
-            base_image = image.copy()
+
+        # PaddleOCR may resize the image internally before inference.
+        # dt_polys are in that resized space, so compute scale factors to map
+        # coordinates back onto the original full-resolution cv2.imread image.
+        scale_x, scale_y = 1.0, 1.0
+        if (hasattr(result_item, 'img')
+                and isinstance(result_item.img, np.ndarray)
+                and result_item.img.ndim == 3):
+            ocr_h, ocr_w = result_item.img.shape[:2]
+            orig_h, orig_w = image.shape[:2]
+            if ocr_h > 0 and ocr_w > 0:
+                scale_x = orig_w / ocr_w
+                scale_y = orig_h / ocr_h
+
+        image_with_boxes = image.copy()
 
         if isinstance(result_item, dict) and 'rec_texts' in result_item:
             texts  = result_item.get('rec_texts', [])
@@ -65,17 +72,21 @@ class PaddleOCREngine(BaseOCREngine):
             for text, score, box in zip(texts, scores, boxes):
                 lines.append(f"Text: {text}\nConfidence: {score:.2f}\n---")
 
-                pts = np.array(box, dtype=np.int32)
+                pts = np.array(box, dtype=np.float32)
+                pts[:, 0] *= scale_x
+                pts[:, 1] *= scale_y
+                pts = pts.astype(np.int32)
+
                 raw_data.append({
                     "text": text,
                     "confidence": float(score),
-                    "box": pts.tolist() if isinstance(pts, np.ndarray) else box
+                    "box": pts.tolist()
                 })
 
-                cv2.polylines(base_image, [pts], isClosed=True,
+                cv2.polylines(image_with_boxes, [pts], isClosed=True,
                               color=(0, 255, 0), thickness=2)
 
-        image_with_boxes_rgb = cv2.cvtColor(base_image, cv2.COLOR_BGR2RGB)
+        image_with_boxes_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB)
         formatted_text = "\n".join(lines) if lines else "No text detected."
         return image_with_boxes_rgb, formatted_text, raw_data
 
