@@ -45,17 +45,9 @@ class PaddleOCREngine(BaseOCREngine):
         if not result:
             return image, "No text detected.", []
 
-        # result[0].img contains the natively annotated image.
-        # Guard: np.array() on a non-image object produces a dtype=object 0-d
-        # array that passes isinstance checks but crashes Gradio's _scale().
-        image_with_boxes = image
-        if hasattr(result[0], 'img') and result[0].img is not None:
-            candidate = np.array(result[0].img)
-            if candidate.ndim == 3 and candidate.shape[2] in (3, 4):
-                image_with_boxes = candidate.astype(np.uint8)
-
         lines = []
         raw_data = []
+        image_with_boxes = image.copy()
 
         # paddlex results are dictionaries
         if result and len(result) > 0 and isinstance(result[0], dict) and 'rec_texts' in result[0]:
@@ -66,18 +58,30 @@ class PaddleOCREngine(BaseOCREngine):
 
             for text, score, box in zip(texts, scores, boxes):
                 lines.append(f"Text: {text}\nConfidence: {score:.2f}\n---")
-                
-                # Reshape for raw_data consistency
-                if isinstance(box, (list, np.ndarray)) and len(box) == 8:
-                    reshaped_box = np.array(box, dtype=np.int32).reshape((4, 2))
-                else:
-                    reshaped_box = np.array(box, dtype=np.int32)
+
+                # Normalise box to (4, 2) int32 array
+                box_arr = np.array(box, dtype=np.int32)
+                if box_arr.size == 8:
+                    box_arr = box_arr.reshape((4, 2))
 
                 raw_data.append({
                     "text": text,
                     "confidence": float(score),
-                    "box": reshaped_box.tolist()
+                    "box": box_arr.tolist()
                 })
+
+                # Draw bounding box manually (PaddleOCR dict API has no .img)
+                cv2.polylines(image_with_boxes, [box_arr], isClosed=True,
+                              color=(0, 255, 0), thickness=2)
+                cv2.putText(image_with_boxes, f"{score:.2f}",
+                            tuple(box_arr[0]), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.5, (0, 255, 0), 1, cv2.LINE_AA)
+
+        # Try to use PaddleOCR's native annotated image if available and valid
+        if hasattr(result[0], 'img') and result[0].img is not None:
+            candidate = np.array(result[0].img)
+            if candidate.ndim == 3 and candidate.shape[2] in (3, 4):
+                image_with_boxes = candidate[:, :, :3].astype(np.uint8)
 
         # Convert back to RGB for Gradio (paddlex usually returns BGR).
         # Only proceed if image_with_boxes is a proper H×W×3 uint8 ndarray.
