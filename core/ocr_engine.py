@@ -36,21 +36,19 @@ class PaddleOCREngine(BaseOCREngine):
         return self.ocr.predict(image_path)
 
     def process_image(self, image_path):
-        image_bgr = cv2.imread(image_path)
-        if image_bgr is None:
+        image = cv2.imread(image_path)
+        if image is None:
             return None, "Failed to read image.", None
 
-        # Convert to RGB — PaddleOCR expects RGB input.
-        # Using the same array for both prediction and drawing ensures
-        # that dt_polys coordinates align exactly with the drawn image.
-        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
-        result = self.ocr.predict(image_rgb)
+        image_with_boxes = image.copy()
+        # Pass file path so PaddleOCR handles its own loading —
+        # dt_polys coordinates are relative to this internal load.
+        result = self.ocr.predict(image_path)
         if not result:
-            return image_rgb, "No text detected.", []
+            return cv2.cvtColor(image, cv2.COLOR_BGR2RGB), "No text detected.", []
 
         lines = []
         raw_data = []
-        image_with_boxes = image_rgb.copy()
 
         if isinstance(result[0], dict) and 'rec_texts' in result[0]:
             texts  = result[0].get('rec_texts', [])
@@ -60,24 +58,19 @@ class PaddleOCREngine(BaseOCREngine):
             for text, score, box in zip(texts, scores, boxes):
                 lines.append(f"Text: {text}\nConfidence: {score:.2f}\n---")
 
-                box_arr = np.array(box, dtype=np.int32)
-                if box_arr.size == 8:
-                    box_arr = box_arr.reshape((4, 2))
-
+                pts = np.array(box, dtype=np.int32)
                 raw_data.append({
                     "text": text,
                     "confidence": float(score),
-                    "box": box_arr.tolist()
+                    "box": pts.tolist() if isinstance(pts, np.ndarray) else box
                 })
 
-                cv2.polylines(image_with_boxes, [box_arr], isClosed=True,
-                              color=(0, 255, 0), thickness=3)
+                cv2.polylines(image_with_boxes, [pts], isClosed=True,
+                              color=(0, 255, 0), thickness=2)
 
-        if not isinstance(image_with_boxes, np.ndarray) or image_with_boxes.ndim != 3:
-            image_with_boxes = None
-
+        image_with_boxes_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB)
         formatted_text = "\n".join(lines) if lines else "No text detected."
-        return image_with_boxes, formatted_text, raw_data
+        return image_with_boxes_rgb, formatted_text, raw_data
 
 class OCRFactory:
     """
