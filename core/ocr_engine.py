@@ -62,17 +62,31 @@ class PaddleOCREngine(BaseOCREngine):
                     "box": pts.tolist()
                 })
 
-        # PaddleX 3.x stores its own visualization (BGR) in result[0].img —
-        # use it directly so bounding boxes are guaranteed to be aligned.
-        annotated_bgr = None
+        # Draw boxes on the image PaddleOCR used internally (result[0].img).
+        # dt_polys coordinates are in that image's pixel space.
+        # If result[0].img differs in size from the original, resize it back.
         if (hasattr(result_item, 'img')
                 and isinstance(result_item.img, np.ndarray)
                 and result_item.img.ndim == 3):
-            annotated_bgr = result_item.img
-        if annotated_bgr is None:
-            annotated_bgr = image
+            canvas = result_item.img.copy()
+        else:
+            canvas = image.copy()
 
-        image_with_boxes_rgb = cv2.cvtColor(annotated_bgr, cv2.COLOR_BGR2RGB)
+        if isinstance(result_item, dict) and 'rec_texts' in result_item:
+            boxes = result_item.get('dt_polys', [])
+            for box in boxes:
+                pts = np.array(box, dtype=np.int32)
+                cv2.polylines(canvas, [pts], isClosed=True,
+                              color=(0, 255, 0), thickness=2)
+
+        # Resize canvas to original image dimensions if PaddleOCR resized internally
+        orig_h, orig_w = image.shape[:2]
+        canvas_h, canvas_w = canvas.shape[:2]
+        print(f"[DEBUG] orig={orig_w}x{orig_h} canvas={canvas_w}x{canvas_h}")
+        if (canvas_h, canvas_w) != (orig_h, orig_w):
+            canvas = cv2.resize(canvas, (orig_w, orig_h))
+
+        image_with_boxes_rgb = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
         formatted_text = "\n".join(lines) if lines else "No text detected."
         return image_with_boxes_rgb, formatted_text, raw_data
 
