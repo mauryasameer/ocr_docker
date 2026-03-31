@@ -72,10 +72,7 @@ class PaddleOCREngine(BaseOCREngine):
 
                 # Draw bounding box manually (PaddleOCR dict API has no .img)
                 cv2.polylines(image_with_boxes, [box_arr], isClosed=True,
-                              color=(0, 255, 0), thickness=2)
-                cv2.putText(image_with_boxes, f"{score:.2f}",
-                            tuple(box_arr[0]), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.5, (0, 255, 0), 1, cv2.LINE_AA)
+                              color=(0, 255, 0), thickness=3)
 
         # Try to use PaddleOCR's native annotated image if available and valid
         if hasattr(result[0], 'img') and result[0].img is not None:
