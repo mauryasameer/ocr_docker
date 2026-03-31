@@ -36,6 +36,7 @@ class PaddleOCREngine(BaseOCREngine):
         return self.ocr.predict(image_path)
 
     def process_image(self, image_path):
+        import tempfile, os
         image = cv2.imread(image_path)
         if image is None:
             return None, "Failed to read image.", None
@@ -52,7 +53,6 @@ class PaddleOCREngine(BaseOCREngine):
             texts  = result_item.get('rec_texts', [])
             scores = result_item.get('rec_scores', [])
             boxes  = result_item.get('dt_polys', [])
-
             for text, score, box in zip(texts, scores, boxes):
                 lines.append(f"Text: {text}\nConfidence: {score:.2f}\n---")
                 pts = np.array(box, dtype=np.int32)
@@ -62,31 +62,28 @@ class PaddleOCREngine(BaseOCREngine):
                     "box": pts.tolist()
                 })
 
-        # Draw boxes on the image PaddleOCR used internally (result[0].img).
-        # dt_polys coordinates are in that image's pixel space.
-        # If result[0].img differs in size from the original, resize it back.
-        if (hasattr(result_item, 'img')
-                and isinstance(result_item.img, np.ndarray)
-                and result_item.img.ndim == 3):
-            canvas = result_item.img.copy()
-        else:
-            canvas = image.copy()
+        # Use PaddleX's own visualization — it applies the exact same transforms
+        # used during inference, so bounding boxes are guaranteed to be aligned.
+        annotated_bgr = None
+        if hasattr(result_item, 'save_to_img'):
+            try:
+                with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+                    tmp_path = tmp.name
+                result_item.save_to_img(tmp_path)
+                annotated_bgr = cv2.imread(tmp_path)
+                os.unlink(tmp_path)
+            except Exception as e:
+                print(f"[WARN] save_to_img failed: {e}")
 
-        if isinstance(result_item, dict) and 'rec_texts' in result_item:
-            boxes = result_item.get('dt_polys', [])
-            for box in boxes:
-                pts = np.array(box, dtype=np.int32)
-                cv2.polylines(canvas, [pts], isClosed=True,
+        if annotated_bgr is None or annotated_bgr.ndim != 3:
+            # Fallback: draw manually on original image
+            annotated_bgr = image.copy()
+            for entry in raw_data:
+                pts = np.array(entry['box'], dtype=np.int32)
+                cv2.polylines(annotated_bgr, [pts], isClosed=True,
                               color=(0, 255, 0), thickness=2)
 
-        # Resize canvas to original image dimensions if PaddleOCR resized internally
-        orig_h, orig_w = image.shape[:2]
-        canvas_h, canvas_w = canvas.shape[:2]
-        print(f"[DEBUG] orig={orig_w}x{orig_h} canvas={canvas_w}x{canvas_h}")
-        if (canvas_h, canvas_w) != (orig_h, orig_w):
-            canvas = cv2.resize(canvas, (orig_w, orig_h))
-
-        image_with_boxes_rgb = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
+        image_with_boxes_rgb = cv2.cvtColor(annotated_bgr, cv2.COLOR_BGR2RGB)
         formatted_text = "\n".join(lines) if lines else "No text detected."
         return image_with_boxes_rgb, formatted_text, raw_data
 
