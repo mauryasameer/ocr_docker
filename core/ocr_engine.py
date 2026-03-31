@@ -36,30 +36,30 @@ class PaddleOCREngine(BaseOCREngine):
         return self.ocr.predict(image_path)
 
     def process_image(self, image_path):
-        image = cv2.imread(image_path)
-        if image is None:
+        image_bgr = cv2.imread(image_path)
+        if image_bgr is None:
             return None, "Failed to read image.", None
 
-        # Use image_path for PaddleOCR to handle metadata/resolution correctly
-        result = self.ocr.predict(image_path)
+        # Convert to RGB — PaddleOCR expects RGB input.
+        # Using the same array for both prediction and drawing ensures
+        # that dt_polys coordinates align exactly with the drawn image.
+        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+        result = self.ocr.predict(image_rgb)
         if not result:
-            return image, "No text detected.", []
+            return image_rgb, "No text detected.", []
 
         lines = []
         raw_data = []
-        image_with_boxes = image.copy()
+        image_with_boxes = image_rgb.copy()
 
-        # paddlex results are dictionaries
-        if result and len(result) > 0 and isinstance(result[0], dict) and 'rec_texts' in result[0]:
-            ocr_result_dict = result[0]
-            texts = ocr_result_dict.get('rec_texts', [])
-            scores = ocr_result_dict.get('rec_scores', [])
-            boxes = ocr_result_dict.get('dt_polys', [])
+        if isinstance(result[0], dict) and 'rec_texts' in result[0]:
+            texts  = result[0].get('rec_texts', [])
+            scores = result[0].get('rec_scores', [])
+            boxes  = result[0].get('dt_polys', [])
 
             for text, score, box in zip(texts, scores, boxes):
                 lines.append(f"Text: {text}\nConfidence: {score:.2f}\n---")
 
-                # Normalise box to (4, 2) int32 array
                 box_arr = np.array(box, dtype=np.int32)
                 if box_arr.size == 8:
                     box_arr = box_arr.reshape((4, 2))
@@ -70,31 +70,14 @@ class PaddleOCREngine(BaseOCREngine):
                     "box": box_arr.tolist()
                 })
 
-                # Draw bounding box manually (PaddleOCR dict API has no .img)
                 cv2.polylines(image_with_boxes, [box_arr], isClosed=True,
                               color=(0, 255, 0), thickness=3)
 
-        # Try to use PaddleOCR's native annotated image if available and valid
-        if hasattr(result[0], 'img') and result[0].img is not None:
-            candidate = np.array(result[0].img)
-            if candidate.ndim == 3 and candidate.shape[2] in (3, 4):
-                image_with_boxes = candidate[:, :, :3].astype(np.uint8)
-
-        # Convert back to RGB for Gradio (paddlex usually returns BGR).
-        # Only proceed if image_with_boxes is a proper H×W×3 uint8 ndarray.
-        image_with_boxes_rgb = None
-        if (isinstance(image_with_boxes, np.ndarray)
-                and image_with_boxes.ndim == 3
-                and image_with_boxes.shape[2] == 3):
-            try:
-                image_with_boxes_rgb = cv2.cvtColor(
-                    image_with_boxes.astype(np.uint8), cv2.COLOR_BGR2RGB
-                )
-            except Exception:
-                image_with_boxes_rgb = None
+        if not isinstance(image_with_boxes, np.ndarray) or image_with_boxes.ndim != 3:
+            image_with_boxes = None
 
         formatted_text = "\n".join(lines) if lines else "No text detected."
-        return image_with_boxes_rgb, formatted_text, raw_data
+        return image_with_boxes, formatted_text, raw_data
 
 class OCRFactory:
     """
