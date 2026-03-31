@@ -40,7 +40,6 @@ class PaddleOCREngine(BaseOCREngine):
         if image is None:
             return None, "Failed to read image.", None
 
-        # Pass file path so PaddleOCR handles its own loading.
         result = self.ocr.predict(image_path)
         if not result:
             return cv2.cvtColor(image, cv2.COLOR_BGR2RGB), "No text detected.", []
@@ -49,21 +48,6 @@ class PaddleOCREngine(BaseOCREngine):
         raw_data = []
         result_item = result[0]
 
-        # PaddleOCR may resize the image internally before inference.
-        # dt_polys are in that resized space, so compute scale factors to map
-        # coordinates back onto the original full-resolution cv2.imread image.
-        scale_x, scale_y = 1.0, 1.0
-        if (hasattr(result_item, 'img')
-                and isinstance(result_item.img, np.ndarray)
-                and result_item.img.ndim == 3):
-            ocr_h, ocr_w = result_item.img.shape[:2]
-            orig_h, orig_w = image.shape[:2]
-            if ocr_h > 0 and ocr_w > 0:
-                scale_x = orig_w / ocr_w
-                scale_y = orig_h / ocr_h
-
-        image_with_boxes = image.copy()
-
         if isinstance(result_item, dict) and 'rec_texts' in result_item:
             texts  = result_item.get('rec_texts', [])
             scores = result_item.get('rec_scores', [])
@@ -71,22 +55,24 @@ class PaddleOCREngine(BaseOCREngine):
 
             for text, score, box in zip(texts, scores, boxes):
                 lines.append(f"Text: {text}\nConfidence: {score:.2f}\n---")
-
-                pts = np.array(box, dtype=np.float32)
-                pts[:, 0] *= scale_x
-                pts[:, 1] *= scale_y
-                pts = pts.astype(np.int32)
-
+                pts = np.array(box, dtype=np.int32)
                 raw_data.append({
                     "text": text,
                     "confidence": float(score),
                     "box": pts.tolist()
                 })
 
-                cv2.polylines(image_with_boxes, [pts], isClosed=True,
-                              color=(0, 255, 0), thickness=2)
+        # PaddleX 3.x stores its own visualization (BGR) in result[0].img —
+        # use it directly so bounding boxes are guaranteed to be aligned.
+        annotated_bgr = None
+        if (hasattr(result_item, 'img')
+                and isinstance(result_item.img, np.ndarray)
+                and result_item.img.ndim == 3):
+            annotated_bgr = result_item.img
+        if annotated_bgr is None:
+            annotated_bgr = image
 
-        image_with_boxes_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB)
+        image_with_boxes_rgb = cv2.cvtColor(annotated_bgr, cv2.COLOR_BGR2RGB)
         formatted_text = "\n".join(lines) if lines else "No text detected."
         return image_with_boxes_rgb, formatted_text, raw_data
 
