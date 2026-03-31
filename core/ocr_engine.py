@@ -40,9 +40,7 @@ class PaddleOCREngine(BaseOCREngine):
         if image is None:
             return None, "Failed to read image.", None
 
-        image_with_boxes = image.copy()
-        # Pass file path so PaddleOCR handles its own loading —
-        # dt_polys coordinates are relative to this internal load.
+        # Pass file path so PaddleOCR handles its own loading.
         result = self.ocr.predict(image_path)
         if not result:
             return cv2.cvtColor(image, cv2.COLOR_BGR2RGB), "No text detected.", []
@@ -50,10 +48,19 @@ class PaddleOCREngine(BaseOCREngine):
         lines = []
         raw_data = []
 
-        if isinstance(result[0], dict) and 'rec_texts' in result[0]:
-            texts  = result[0].get('rec_texts', [])
-            scores = result[0].get('rec_scores', [])
-            boxes  = result[0].get('dt_polys', [])
+        # Use the image PaddleOCR processed internally — dt_polys coordinates
+        # are in that image's space. Fall back to cv2.imread result if unavailable.
+        result_item = result[0]
+        base_image = None
+        if hasattr(result_item, 'img') and isinstance(result_item.img, np.ndarray) and result_item.img.ndim == 3:
+            base_image = result_item.img.copy()
+        if base_image is None:
+            base_image = image.copy()
+
+        if isinstance(result_item, dict) and 'rec_texts' in result_item:
+            texts  = result_item.get('rec_texts', [])
+            scores = result_item.get('rec_scores', [])
+            boxes  = result_item.get('dt_polys', [])
 
             for text, score, box in zip(texts, scores, boxes):
                 lines.append(f"Text: {text}\nConfidence: {score:.2f}\n---")
@@ -65,10 +72,10 @@ class PaddleOCREngine(BaseOCREngine):
                     "box": pts.tolist() if isinstance(pts, np.ndarray) else box
                 })
 
-                cv2.polylines(image_with_boxes, [pts], isClosed=True,
+                cv2.polylines(base_image, [pts], isClosed=True,
                               color=(0, 255, 0), thickness=2)
 
-        image_with_boxes_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB)
+        image_with_boxes_rgb = cv2.cvtColor(base_image, cv2.COLOR_BGR2RGB)
         formatted_text = "\n".join(lines) if lines else "No text detected."
         return image_with_boxes_rgb, formatted_text, raw_data
 
