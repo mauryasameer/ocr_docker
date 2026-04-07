@@ -1,10 +1,11 @@
 import sys
 from unittest.mock import MagicMock
+
 import numpy as np
 
 # Global mocks for heavyweight OCR libraries to avoid ModuleNotFoundErrors in CI
 mock_modules = [
-    "paddleocr", 
+    "paddleocr",
     "paddleocr.PaddleOCR",
     "paddlex",
     "easyocr",
@@ -23,7 +24,7 @@ class MockResult(dict):
 def mock_predict(*args, **kwargs):
     # PaddleOCREngine expects a list of dictionaries with 'rec_texts'
     res = MockResult({
-        'rec_texts': ['Mocked Text'], 
+        'rec_texts': ['Mocked Text'],
         'rec_scores': [0.99],
         'dt_polys': [[[0, 0], [10, 0]]]
     })

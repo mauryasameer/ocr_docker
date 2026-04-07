@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Tuple
 import os
 import tempfile
 
@@ -33,7 +32,7 @@ class PaddleOCREngine(BaseOCREngine):
     def predict(self, image_path: str):
         return self.ocr.predict(image_path)
 
-    def process_image(self, image_path: str) -> Tuple[object, str, list]:
+    def process_image(self, image_path: str) -> tuple[object, str, list]:
         image = cv2.imread(image_path)
         if image is None:
             return None, "Failed to read image.", None

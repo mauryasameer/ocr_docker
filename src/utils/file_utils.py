@@ -13,7 +13,7 @@ def load_json(path: str) -> dict | None:
     """Load data from a JSON file, returning None if the file does not exist."""
     if not os.path.exists(path):
         return None
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 

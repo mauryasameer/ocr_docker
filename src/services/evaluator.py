@@ -1,5 +1,4 @@
 import difflib
-from typing import List
 
 
 class OCREvaluator:
@@ -42,7 +41,7 @@ class OCREvaluator:
         )
         return distance / len(gold_text)
 
-    def evaluate_batch(self, engine, test_cases: List[dict]) -> dict:
+    def evaluate_batch(self, engine, test_cases: list[dict]) -> dict:
         """Evaluate engine on a list of {image_path, text} test cases."""
         results = []
         for case in test_cases:
