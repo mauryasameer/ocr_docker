@@ -108,7 +108,7 @@ class OCRFactory:
         engine_class = cls._engines.get(name)
         if not engine_class:
             raise ValueError(f"OCR Engine '{name}' not found or not installed.")
-        
+
         instance = engine_class(**kwargs)
         cls._instances[name] = instance
         return instance
