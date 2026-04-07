@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
+from typing import Tuple
 
 
 class BaseOCREngine(ABC):
@@ -14,6 +17,6 @@ class BaseOCREngine(ABC):
         pass
 
     @abstractmethod
-    def process_image(self, image_path: str) -> tuple[object, str, list]:
+    def process_image(self, image_path: str) -> Tuple[object, str, list]:
         """Process image and return (annotated_image, formatted_text, raw_data)."""
         pass
