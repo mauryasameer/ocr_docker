@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import logging
+from typing import Tuple
 import shutil
 
 import cv2
@@ -31,7 +34,7 @@ class TesseractEngine(BaseOCREngine):
             image_path, lang=self.lang, output_type=self.pytesseract.Output.DICT
         )
 
-    def process_image(self, image_path: str) -> tuple[object, str, list]:
+    def process_image(self, image_path: str) -> Tuple[object, str, list]:
         image = cv2.imread(image_path)
         if image is None:
             return None, "Failed to read image.", None

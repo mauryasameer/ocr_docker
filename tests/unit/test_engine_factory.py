@@ -4,8 +4,11 @@ from src.providers.paddle_provider import OCRFactory, PaddleOCREngine
 
 
 def test_factory_get_default():
-    engine = OCRFactory.get_engine()
-    assert isinstance(engine, PaddleOCREngine)
+    try:
+        engine = OCRFactory.get_engine()
+        assert isinstance(engine, PaddleOCREngine)
+    except ImportError:
+        pytest.skip("paddleocr not installed in this environment")
 
 
 def test_factory_invalid_engine():
