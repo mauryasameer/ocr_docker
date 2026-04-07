@@ -152,3 +152,6 @@ models/
 *.png
 !assets/*.png
 !test.jpg
+
+# Runtime data (never committed)
+src/data/
