@@ -1,10 +1,13 @@
 import logging
 import os
+import sys
 import traceback
 
 import gradio as gr
 import numpy as np
 from PIL import Image
+
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from src.providers.paddle_provider import OCRFactory
 

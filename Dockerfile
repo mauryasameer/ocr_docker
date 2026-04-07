@@ -41,13 +41,9 @@ USER user
 # 8. Set HOME environment variable so models download to a writable directory
 ENV HOME=/code
 
-# 9. Copy and run the pre-download script.
-# (PaddleOCR is always pre-downloaded by default)
-COPY --chown=user:user ./download_models.py /code/download_models.py
-RUN python download_models.py
 
 # 10. Copy your application code into the container
-COPY --chown=user:user ./core /code/core
+COPY --chown=user:user ./src /code/src
 COPY --chown=user:user ./data /code/data
 COPY --chown=user:user ./app.py /code/app.py
 
