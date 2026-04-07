@@ -5,23 +5,54 @@ on:
     branches: [main]
 
 jobs:
+  # ── Gate: all tests must pass before deploy ──────────────────────────────
   test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install test dependencies
+        run: pip install pytest numpy opencv-python-headless
+
+      - name: Run unit tests
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          pytest tests/unit/ -v --tb=short
+
+      - name: Run integration tests
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          pytest tests/integration/ -v --tb=short
+
+  # ── Gate: lint must pass before deploy ───────────────────────────────────
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.13'
-      - name: Install Test Deps
-        run: pip install pytest numpy opencv-python-headless
-      - name: Run Tests
-        run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
-          pytest tests/
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ruff
+        run: pip install ruff==0.11.2
+
+      - name: Lint
+        run: ruff check .
+
+  # ── Deploy: only runs after test AND lint both pass ───────────────────────
   deploy:
-    needs: [test]
+    needs: [test, lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,9 +60,9 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.12"
 
       - name: Install Hugging Face Hub
         run: pip install huggingface_hub
@@ -39,19 +70,20 @@ jobs:
       - name: Prep Sync Folder
         run: |
           mkdir hf_sync
-          # Prepend metadata to README
+          # Prepend HF Space metadata to README
           cat .github/hf_metadata.yml README.md > hf_sync/README.md
-          # Copy all necessary files
+          # Copy application entrypoint and dependencies
           cp Dockerfile hf_sync/
           cp app.py hf_sync/
           cp requirements.txt hf_sync/
-          cp download_models.py hf_sync/
-          cp -r core hf_sync/
+          # Copy new modular source layout
+          cp -r src hf_sync/
+          # Copy static assets and data
           cp -r assets hf_sync/
           cp -r data hf_sync/
           cp .gitattributes hf_sync/
 
-      - name: Push to Hub
+      - name: Push to HuggingFace Hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
