@@ -27,7 +27,13 @@ class PaddleOCREngine(BaseOCREngine):
         if not _PADDLE_AVAILABLE:
             raise ImportError("paddleocr not installed. Run: pip install paddleocr")
         logger.info("Initializing PaddleOCR (lang=%s)...", lang)
-        self.ocr = _PaddleOCR(use_angle_cls=use_angle_cls, lang=lang, enable_mkldnn=enable_mkldnn)
+        self.ocr = _PaddleOCR(
+            use_angle_cls=use_angle_cls,
+            lang=lang,
+            enable_mkldnn=enable_mkldnn,
+            use_gpu=False,
+            show_log=False
+        )
 
     def predict(self, image_path: str):
         return self.ocr.predict(image_path)
@@ -80,6 +86,7 @@ class OCRFactory:
     """Factory for instantiating and registering OCR engine providers."""
 
     _engines: dict = {"paddle": PaddleOCREngine}
+    _instances: dict = {}
 
     @classmethod
     def register_engine(cls, name: str, engine_class: type) -> None:
@@ -88,6 +95,9 @@ class OCRFactory:
     @classmethod
     def get_engine(cls, name: str = "paddle", **kwargs) -> BaseOCREngine:
         name = name.lower()
+        if name in cls._instances:
+            return cls._instances[name]
+
         if name not in cls._engines:
             if name == "easyocr":
                 from src.providers.easyocr_provider import EasyOCREngine
@@ -98,7 +108,10 @@ class OCRFactory:
         engine_class = cls._engines.get(name)
         if not engine_class:
             raise ValueError(f"OCR Engine '{name}' not found or not installed.")
-        return engine_class(**kwargs)
+
+        instance = engine_class(**kwargs)
+        cls._instances[name] = instance
+        return instance
 
     @classmethod
     def list_available_engines(cls) -> list[str]:
