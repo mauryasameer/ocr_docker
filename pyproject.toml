@@ -1,6 +1,7 @@
 [tool.ruff]
 target-version = "py311"
 line-length = 120
+exclude = ["venv", ".venv", "core", "scripts"]
 
 [tool.ruff.lint]
 select = [
@@ -18,6 +19,7 @@ ignore = [
     "B008",   # function call in default argument
     "UP007",  # keep Optional in public API signatures
     "PIE790", # unnecessary pass in abstract stubs
+    "B905",   # zip() strict= requires Python 3.10+; keep 3.9 compat locally
 ]
 
 [tool.ruff.lint.per-file-ignores]
