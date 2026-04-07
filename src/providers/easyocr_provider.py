@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class EasyOCREngine(BaseOCREngine):
     """EasyOCR implementation of BaseOCREngine."""
 
-    def __init__(self, gpu: bool = False, lang: Optional[List[str]] = None):
+    def __init__(self, gpu: bool = False, lang: Optional[list[str]] = None):
         if not _EASYOCR_AVAILABLE:
             raise ImportError("easyocr not installed. Run: pip install easyocr")
         if lang is None:
@@ -31,7 +31,7 @@ class EasyOCREngine(BaseOCREngine):
     def predict(self, image_path: str):
         return self.reader.readtext(image_path)
 
-    def process_image(self, image_path: str) -> Tuple[object, str, list]:
+    def process_image(self, image_path: str) -> tuple[object, str, list]:
         image = cv2.imread(image_path)
         if image is None:
             return None, "Failed to read image.", None

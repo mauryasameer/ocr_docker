@@ -5,7 +5,6 @@ These tests exercise real engine instantiation with mocked heavy deps.
 from unittest.mock import MagicMock, patch
 
 import numpy as np
-import pytest
 
 from src.providers.paddle_provider import OCRFactory
 from src.services.evaluator import OCREvaluator
