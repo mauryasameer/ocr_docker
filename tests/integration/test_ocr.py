@@ -38,8 +38,9 @@ def test_paddle_engine_mocked_predict():
 
 def test_easyocr_factory_dynamic_loading():
     with patch("src.providers.easyocr_provider.EasyOCREngine") as mock_easy:
-        # Reset registry so easyocr is not cached from a previous test
+        # Reset registry and instance cache so easyocr is not cached from a previous test
         OCRFactory._engines.pop("easyocr", None)
+        OCRFactory._instances.pop("easyocr", None)
         OCRFactory.get_engine("easyocr")
         mock_easy.assert_called_once()
 

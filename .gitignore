@@ -155,3 +155,7 @@ models/
 
 # Runtime data (never committed)
 src/data/
+
+# code-review-graph local graph
+*.crg.db
+.code-review-graph/
