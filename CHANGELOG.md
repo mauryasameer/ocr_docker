@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.0] - 2026-04-13
+
+### Changed
+- Upgraded CI and deploy gate to Python 3.12 (removed 3.11/3.12 matrix)
+- Updated ruff `target-version` to `py312` in `pyproject.toml`
+
+### Added
+- `code-review-graph==2.2.1` to dev dependencies for local knowledge graph
+
+### Fixed
+- Test isolation bug in `test_easyocr_factory_dynamic_loading`: clear `OCRFactory._instances` cache in addition to `_engines` registry
+
 ## [1.0.0] - 2026-04-07
 
 ### Added
