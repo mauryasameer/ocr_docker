@@ -27,12 +27,13 @@ class PaddleOCREngine(BaseOCREngine):
         if not _PADDLE_AVAILABLE:
             raise ImportError("paddleocr not installed. Run: pip install paddleocr")
         logger.info("Initializing PaddleOCR (lang=%s)...", lang)
+        # PaddleOCR 3.x rewrote its constructor: use_angle_cls -> use_textline_orientation,
+        # show_log removed entirely, use_gpu removed in favor of device="cpu"/"gpu".
         self.ocr = _PaddleOCR(
-            use_angle_cls=use_angle_cls,
+            use_textline_orientation=use_angle_cls,
             lang=lang,
             enable_mkldnn=enable_mkldnn,
-            use_gpu=False,
-            show_log=False
+            device="cpu",
         )
 
     def predict(self, image_path: str):
