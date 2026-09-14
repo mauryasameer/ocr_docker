@@ -36,7 +36,7 @@ def build_report(results: dict, engine_name: str) -> ReportBuilder:
     for entry in results["detailed_results"]:
         report.add_section(
             ReportSection(
-                title=entry["image"],
+                title=html.escape(entry["image"]),
                 content=(
                     f"Gold: {html.escape(entry['gold'])}<br>"
                     f"Predicted: {html.escape(entry['pred'])}"

@@ -34,3 +34,13 @@ def test_build_report_escapes_gold_and_predicted_text():
 
     assert "<script>alert(1)</script>" not in html
     assert "&lt;script&gt;" in html
+
+
+def test_build_report_escapes_image_filenames():
+    results = _sample_results()
+    results["detailed_results"][0]["image"] = "data/<script>alert(1)</script>.png"
+    report = build_report(results, engine_name="paddle")
+    html = report.to_html()
+
+    assert "data/<script>alert(1)</script>.png" not in html
+    assert "data/&lt;script&gt;alert(1)&lt;/script&gt;.png" in html
