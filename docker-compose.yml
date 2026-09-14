@@ -1,0 +1,8 @@
+services:
+  ocr-docker:
+    build: .
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./data/gold_standard:/code/data/gold_standard:ro
+      - ./reports:/code/reports

@@ -1,4 +1,7 @@
 import difflib
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class OCREvaluator:
@@ -42,12 +45,19 @@ class OCREvaluator:
         return distance / len(gold_text)
 
     def evaluate_batch(self, engine, test_cases: list[dict]) -> dict:
-        """Evaluate engine on a list of {image_path, text} test cases."""
+        """Evaluate engine on a list of {image_path, ground_truth} test cases."""
         results = []
         for case in test_cases:
-            _, _, raw_data = engine.process_image(case["image_path"])
-            predicted_text = " ".join(item["text"] for item in raw_data)
-            gold_text = case["text"]
+            gold_text = case["ground_truth"]
+            try:
+                _, _, raw_data = engine.process_image(case["image_path"])
+                if raw_data is None:
+                    raise ValueError("process_image returned no data")
+                predicted_text = " ".join(item["text"] for item in raw_data)
+            except Exception:
+                logger.exception("OCR failed for %s", case["image_path"])
+                predicted_text = ""
+
             results.append({
                 "image": case["image_path"],
                 "gold": gold_text,
