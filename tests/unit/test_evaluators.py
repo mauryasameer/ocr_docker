@@ -57,14 +57,17 @@ def test_evaluate_batch_isolates_one_bad_entry(evaluator):
             return None, "text", [{"text": "hello world"}]
 
     test_cases = [
-        {"image_path": "good.png", "ground_truth": "hello world"},
+        {"image_path": "good1.png", "ground_truth": "hello world"},
         {"image_path": "bad.png", "ground_truth": "hello world"},
+        {"image_path": "good2.png", "ground_truth": "hello world"},
     ]
     result = evaluator.evaluate_batch(PartiallyBadEngine(), test_cases)
 
-    assert len(result["detailed_results"]) == 2
-    good_entry = next(r for r in result["detailed_results"] if r["image"] == "good.png")
+    assert len(result["detailed_results"]) == 3
+    good1_entry = next(r for r in result["detailed_results"] if r["image"] == "good1.png")
     bad_entry = next(r for r in result["detailed_results"] if r["image"] == "bad.png")
-    assert good_entry["f1"] == 1.0
+    good2_entry = next(r for r in result["detailed_results"] if r["image"] == "good2.png")
+    assert good1_entry["f1"] == 1.0
     assert bad_entry["pred"] == ""
     assert bad_entry["f1"] == 0.0
+    assert good2_entry["f1"] == 1.0
