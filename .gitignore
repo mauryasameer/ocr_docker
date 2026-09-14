@@ -154,6 +154,7 @@ data/processed/
 models/
 *.png
 !assets/*.png
+!data/gold_standard/*.png
 !test.jpg
 
 # Runtime data (never committed)
