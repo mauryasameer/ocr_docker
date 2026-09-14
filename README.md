@@ -68,7 +68,7 @@ Generates a "Committee-Ready" report in `reports/` following every benchmark, pr
 
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
-python scripts/run_benchmark.py --engine paddle
+python3 -m scripts.run_benchmark --engine paddle
 ```
 
 Runs the configured engine against `data/gold_standard/accuracy_tests.json` and writes an HTML
