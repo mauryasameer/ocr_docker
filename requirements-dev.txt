@@ -2,3 +2,4 @@ black>=24.0.0
 huggingface_hub
 code-review-graph==2.2.1
 meerax==1.10.2
+pytest-mock>=3.14.0
