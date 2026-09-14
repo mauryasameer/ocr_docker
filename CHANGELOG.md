@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.1] - 2026-09-14
+
+### Fixed
+- `PaddleOCREngine` (the default and only tested-in-production OCR engine) failed to construct at all on the live HuggingFace Space: `ValueError: Unknown argument: show_log`. PaddleOCR 3.x rewrote its constructor — `show_log`/`use_gpu` were removed entirely, `use_angle_cls` was renamed to `use_textline_orientation` — but `requirements.txt` had never pinned a `paddleocr` version, so a routine environment rebuild silently picked up the breaking 3.x release. Fixed the constructor call and pinned `paddlepaddle==3.3.1`/`paddleocr==3.7.0` to the verified-working versions. Added a real test asserting the exact constructor kwargs, since the existing global `paddleocr` mock in `conftest.py` never validated kwargs and let this regression through undetected.
+
+---
+
 ## [1.2.0] - 2026-09-14
 
 ### Added
