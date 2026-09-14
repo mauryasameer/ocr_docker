@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.0] - 2026-09-14
+
+### Added
+- `scripts/run_benchmark.py` — a real, working CLI for the "Audit Trail Reporting" feature the README has described since v1.0.0 but that was never wired up (`format_benchmark_report()`/`save_json()`/`load_json()` were dead code with zero call sites). Runs the existing `OCREvaluator` against `data/gold_standard/accuracy_tests.json`, rendering results via a new `src/services/report_service.py` using `meerax.report.ReportBuilder`.
+- `GOVERNANCE.md` — intended use, explainability boundary, fairness scope (not applicable — no demographic data), audit trail, regulatory framing.
+- `docker-compose.yml` for local one-click dev use (`docker compose up --build`), alongside the existing HuggingFace-Spaces-specific `Dockerfile`, which is unchanged.
+- `meerax==1.10.2` added to `requirements-dev.txt` (not `requirements.txt` — it's a benchmark/test-only dependency, never deployed to the live HF Space).
+
+### Fixed
+- `OCREvaluator.evaluate_batch()` read `case["text"]` for gold-standard text, but the real fixture format (`data/gold_standard/accuracy_tests.json`) uses `"ground_truth"` — a latent key mismatch, never caught because nothing called this method against real data before this release. Also added per-entry failure isolation so one unreadable image no longer crashes the whole batch.
+- Stale `pyproject.toml` ruff `exclude` list referencing a `core/` directory removed in v1.0.0.
+- `.DS_Store` was untracked but not gitignored.
+- README's project-structure tree and version badge had drifted from the actual repo state.
+
+---
+
 ## [1.1.0] - 2026-04-13
 
 ### Changed
@@ -16,6 +32,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 - Test isolation bug in `test_easyocr_factory_dynamic_loading`: clear `OCRFactory._instances` cache in addition to `_engines` registry
+
+---
 
 ## [1.0.0] - 2026-04-07
 
