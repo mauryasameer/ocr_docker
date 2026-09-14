@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# macOS
+.DS_Store
+
 # C extensions
 *.so
 
@@ -151,6 +154,7 @@ data/processed/
 models/
 *.png
 !assets/*.png
+!data/gold_standard/*.png
 !test.jpg
 
 # Runtime data (never committed)

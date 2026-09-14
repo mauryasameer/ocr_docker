@@ -3,7 +3,7 @@
 ### **High-Performance Optical Character Recognition & Performance Auditing Suite**
 **An opinionated, production-ready OCR engine with automated performance validation.**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue)](CHANGELOG.md)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org)
 [![HuggingFace Space](https://img.shields.io/badge/🤗%20HuggingFace-Space-blue)](https://huggingface.co/spaces/mauryasameer/OCR)
 [![CI](https://github.com/mauryasameer/ocr_docker/actions/workflows/ci.yml/badge.svg)](https://github.com/mauryasameer/ocr_docker/actions)
@@ -29,20 +29,26 @@ Many OCR implementations are "black boxes." This framework provides an **audit t
 ```text
 ocr_docker/
 ├── .github/
-│   └── workflows/      # Automated sync to Hugging Face Spaces
-├── core/
-│   ├── evaluators/     # F1 Score & CER character-level metrics
-│   ├── ocr_engine.py   # High-level PaddleOCR orchestrator
-│   └── utils.py        # Persistence & reporting utilities
-├── data/
-│   └── gold_standard/  # Reference images and ground-truth JSON
-├── reports/            # Generated audit trails (JSON/Markdown)
+│   └── workflows/           # CI, and automated sync to Hugging Face Spaces
+├── src/
+│   ├── core/interfaces.py   # BaseOCREngine abstract interface
+│   ├── providers/           # PaddleOCR, EasyOCR, Tesseract engine implementations
+│   ├── services/
+│   │   ├── evaluator.py     # F1 Score & CER character-level metrics
+│   │   └── report_service.py # meerax-backed HTML benchmark report
+│   └── utils/file_utils.py  # JSON persistence
 ├── scripts/
-│   └── run_benchmark.py # CLI Entry Point for performance auditing
-├── tests/              # Pytest unit testing suite
-├── app.py              # Gradio web interface (HuggingFace Spaces)
-├── requirements.txt    # Production dependencies
-└── requirements-dev.txt # Test-only dependencies
+│   └── run_benchmark.py     # CLI entry point for performance auditing
+├── data/
+│   └── gold_standard/       # Reference images and ground-truth JSON
+├── reports/                 # Generated audit trails (HTML)
+├── tests/                   # Pytest unit + integration suite
+├── app.py                   # Gradio web interface (HuggingFace Spaces)
+├── Dockerfile                # HuggingFace Spaces deployment image
+├── docker-compose.yml        # Local one-click dev: `docker compose up --build`
+├── GOVERNANCE.md              # AI-governance documentation
+├── requirements.txt          # Production dependencies (synced to the HF Space)
+└── requirements-dev.txt      # Dev/tooling deps, incl. meerax for the benchmark CLI
 ```
 
 
@@ -56,6 +62,33 @@ For high-precision documents, we measure the Levenshtein distance at the charact
 
 ### **3. Audit Trail Reporting**
 Generates a "Committee-Ready" report in `reports/` following every benchmark, providing a timestamped record of model performance — essential for tracking model health under production load.
+
+
+## 🏃 Running a Benchmark
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+python3 -m scripts.run_benchmark --engine paddle
+```
+
+Runs the configured engine against `data/gold_standard/accuracy_tests.json` and writes an HTML
+audit report to `reports/`.
+
+
+## 🐳 Docker
+
+```bash
+docker compose up --build
+```
+
+Runs the Gradio app locally at `http://localhost:7860` — the same image used for the live
+HuggingFace Space deployment.
+
+
+## ⚖️ Governance
+
+See [GOVERNANCE.md](./GOVERNANCE.md) for intended use, explainability boundaries, and audit
+trail details.
 
 
 ## ⚖️ License
