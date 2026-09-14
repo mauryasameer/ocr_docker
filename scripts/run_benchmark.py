@@ -25,24 +25,40 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: test cases file not found: {test_cases_path}", file=sys.stderr)
         return 1
 
-    test_cases = json.loads(test_cases_path.read_text(encoding="utf-8"))
+    try:
+        test_cases = json.loads(test_cases_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        print(f"error: could not parse test cases file {test_cases_path}: {exc}", file=sys.stderr)
+        return 1
     if not test_cases:
         print(f"error: no test cases found in {test_cases_path}", file=sys.stderr)
         return 1
 
     try:
         engine = OCRFactory.get_engine(args.engine)
-    except ValueError as exc:
+    except (ValueError, ImportError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
     evaluator = OCREvaluator()
     results = evaluator.evaluate_batch(engine, test_cases)
 
+    detailed_results = results["detailed_results"]
+    all_failed = bool(detailed_results) and all(r["pred"] == "" for r in detailed_results)
+
     report = build_report(results, args.engine)
     output_path = args.output or f"reports/benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
     report.save(output_path)
     print(f"report written to {output_path}")
+
+    if all_failed:
+        print(
+            f"warning: all {len(test_cases)} images failed to process — check that the "
+            "image files actually exist and are readable",
+            file=sys.stderr,
+        )
+        return 1
+
     return 0
 
 
