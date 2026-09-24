@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.2] - 2026-09-24
+
+### Changed
+- Added a repository hero that illustrates the document-to-structured-evidence OCR audit workflow.
+
+---
+
 ## [1.2.1] - 2026-09-14
 
 ### Fixed
@@ -60,3 +67,4 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `print()` replaced with `logging` throughout library code
 
 [1.0.0]: https://github.com/mauryasameer/ocr_docker/releases/tag/v1.0.0
+[1.2.2]: https://github.com/mauryasameer/ocr_docker/compare/v1.2.1...v1.2.2

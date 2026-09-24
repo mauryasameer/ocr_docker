@@ -3,7 +3,9 @@
 ### **High-Performance Optical Character Recognition & Performance Auditing Suite**
 **An opinionated, production-ready OCR engine with automated performance validation.**
 
-[![Version](https://img.shields.io/badge/version-1.2.1-blue)](CHANGELOG.md)
+![OCR-Docker-Framework document-to-audited-evidence workflow](assets/ocr-audit-hero.png)
+
+[![Version](https://img.shields.io/badge/version-1.2.2-blue)](CHANGELOG.md)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org)
 [![HuggingFace Space](https://img.shields.io/badge/🤗%20HuggingFace-Space-blue)](https://huggingface.co/spaces/mauryasameer/OCR)
 [![CI](https://github.com/mauryasameer/ocr_docker/actions/workflows/ci.yml/badge.svg)](https://github.com/mauryasameer/ocr_docker/actions)
